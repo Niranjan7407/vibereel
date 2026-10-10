@@ -1,0 +1,37 @@
+name: Bug report
+description: Something renders wrong, crashes or parses badly
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report! Please do not paste raw session logs. They often contain secrets and private code.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you expected, what you saw instead. Screenshots welcome.
+    validations:
+      required: true
+  - type: input
+    id: command
+    attributes:
+      label: Command you ran
+      placeholder: npx vibereel --theme light --aspect 9:16
+  - type: dropdown
+    id: source
+    attributes:
+      label: Session source
+      options: [Claude Code, Codex, Other]
+  - type: input
+    id: env
+    attributes:
+      label: vibereel version, Node version, OS
+      placeholder: 0.1.0, Node 22.3, macOS 15
+  - type: textarea
+    id: timeline
+    attributes:
+      label: Redacted timeline (optional but super helpful)
+      description: |
+        Run the same command with `--json` and attach the `.timeline.json` it writes. Redaction is on by default, but please skim it and remove anything private before sharing. Trimming it to the events around the bug is great.
+      render: json
