@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="vibereel">
+<title>Add a dark mode to the todo app. · vibereel</title>
+<style>:root {
+  --mono: "JetBrains Mono", "SF Mono", "SFMono-Regular", ui-monospace, Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ---------- themes ---------- */
+[data-theme="dark"] {
+  --page: #08090a;
+  --win: #0e0f11;
+  --chrome: #121316;
+  --pane: #0b0c0e;
+  --line: #1d1f23;
+  --line-2: #26292e;
+  --text: #e8e9eb;
+  --text-2: #a1a5ac;
+  --muted: #63676f;
+  --faint: #3a3d43;
+  --accent: #f2b544;
+  --accent-ink: #1a1305;
+  --add: #3fb950;
+  --add-bg: rgba(46, 160, 67, 0.10);
+  --add-strong: rgba(46, 160, 67, 0.32);
+  --del: #f85149;
+  --del-bg: rgba(248, 81, 73, 0.11);
+  --del-strong: rgba(248, 81, 73, 0.30);
+  --hl: rgba(242, 181, 68, 0.10);
+  --kw: #ff8f73;
+  --str: #9fd5a1;
+  --num: #e9b96e;
+  --com: #5c636d;
+  --fn: #8cb8ff;
+  --shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+[data-theme="light"] {
+  --page: #f3f3f1;
+  --win: #ffffff;
+  --chrome: #fafaf9;
+  --pane: #fbfbfa;
+  --line: #e7e6e3;
+  --line-2: #dcdad6;
+  --text: #17181a;
+  --text-2: #4b4f56;
+  --muted: #8a8e95;
+  --faint: #c9c8c4;
+  --accent: #c27a00;
+  --accent-ink: #fff;
+  --add: #1a7f37;
+  --add-bg: rgba(26, 127, 55, 0.09);
+  --add-strong: rgba(26, 127, 55, 0.22);
+  --del: #cf222e;
+  --del-bg: rgba(207, 34, 46, 0.08);
+  --del-strong: rgba(207, 34, 46, 0.2);
+  --hl: rgba(194, 122, 0, 0.08);
+  --kw: #c4381f;
+  --str: #1f7a3a;
+  --num: #9a5b00;
+  --com: #9a9ea5;
+  --fn: #2457c5;
+  --shadow: 0 24px 60px -24px rgba(30, 30, 20, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.02);
+}
+[data-theme="retro"] {
+  --mono: "IBM Plex Mono", "VT323", "SF Mono", ui-monospace, Menlo, monospace;
+  --sans: var(--mono);
+  --page: #030603;
+  --win: #050a05;
+  --chrome: #071007;
+  --pane: #040904;
+  --line: #123312;
+  --line-2: #1b4a1b;
+  --text: #8dff9a;
+  --text-2: #5fd06d;
+  --muted: #2f8a3a;
+  --faint: #1a4d20;
+  --accent: #d6ff5e;
+  --accent-ink: #041004;
+  --add: #8dff9a;
+  --add-bg: rgba(141, 255, 154, 0.10);
+  --add-strong: rgba(141, 255, 154, 0.24);
+  --del: #ff7a4d;
+  --del-bg: rgba(255, 122, 77, 0.10);
+  --del-strong: rgba(255, 122, 77, 0.24);
+  --hl: rgba(214, 255, 94, 0.08);
+  --kw: #d6ff5e;
+  --str: #b8ffbf;
+  --num: #d6ff5e;
+  --com: #2f8a3a;
+  --fn: #b8ffbf;
+  --shadow: 0 0 0 1px #0d260d;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--page); overflow: hidden; }
+body { font-family: var(--sans); color: var(--text); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+
+#viewport { position: fixed; inset: 0; display: grid; place-items: center; }
+#stage {
+  position: relative; flex: none; overflow: hidden; background: var(--page);
+  transform-origin: center center;
+}
+[data-aspect="16:9"] #stage { width: 1280px; height: 720px; padding: 26px 30px 0; }
+[data-aspect="9:16"] #stage { width: 720px; height: 1280px; padding: 30px 24px 0; }
+
+/* ---------- window ---------- */
+.win {
+  position: relative; display: grid; overflow: hidden;
+  background: var(--win); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow);
+}
+[data-aspect="16:9"] .win { height: 622px; grid-template-columns: 220px 1fr; grid-template-rows: 38px 1fr 196px; grid-template-areas: "bar bar" "tree editor" "tree term"; }
+[data-aspect="9:16"] .win { height: 1150px; grid-template-columns: 1fr; grid-template-rows: 40px 1fr 170px 330px; grid-template-areas: "bar" "editor" "tree" "term"; }
+
+.bar {
+  grid-area: bar; display: flex; align-items: center; gap: 14px; padding: 0 14px;
+  background: var(--chrome); border-bottom: 1px solid var(--line); font-size: 12px; color: var(--muted);
+}
+.dots { display: flex; gap: 7px; }
+.dots i { width: 11px; height: 11px; border-radius: 50%; background: var(--line-2); display: block; }
+.bar .crumb { display: flex; gap: 7px; align-items: center; min-width: 0; white-space: nowrap; overflow: hidden; }
+.bar .crumb b { color: var(--text-2); font-weight: 500; }
+.bar .now { margin-left: auto; font-family: var(--mono); font-size: 11.5px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46%; }
+.bar .now .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 8px; vertical-align: 1px; }
+.badge {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.02em; color: var(--text-2);
+  border: 1px solid var(--line-2); border-radius: 5px; padding: 2px 7px; white-space: nowrap;
+}
+
+/* ---------- file tree ---------- */
+.tree { grid-area: tree; border-right: 1px solid var(--line); background: var(--pane); padding: 12px 0; overflow: hidden; font-family: var(--mono); font-size: 12px; }
+[data-aspect="9:16"] .tree { border-right: 0; border-top: 1px solid var(--line); padding: 10px 0; }
+[data-aspect="9:16"] .tree .rows { columns: 2; column-gap: 0; }
+.label { font-family: var(--sans); font-size: 10px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); padding: 0 14px 8px; display: flex; justify-content: space-between; }
+[data-theme="retro"] .label { font-family: var(--mono); }
+.row { position: relative; display: flex; align-items: center; height: 22px; padding-right: 10px; color: var(--muted); white-space: nowrap; break-inside: avoid; }
+.row .nm { overflow: hidden; text-overflow: ellipsis; }
+.row.dir { color: var(--faint); }
+.row.seen { color: var(--text-2); }
+.row.changed { color: var(--text); }
+.row .flash { position: absolute; inset: 0; background: var(--accent); opacity: 0; }
+.row.active { background: var(--hl); }
+.row.active::before { content: ""; position: absolute; left: 0; top: 3px; bottom: 3px; width: 2px; background: var(--accent); border-radius: 2px; }
+.row .tag { margin-left: auto; padding-left: 8px; font-size: 10.5px; font-weight: 600; }
+.row .tag.A { color: var(--add); }
+.row .tag.M { color: var(--accent); }
+.row .tag.R { color: var(--muted); font-weight: 400; }
+.row.more { color: var(--muted); font-style: italic; }
+
+/* ---------- editor ---------- */
+.editor { grid-area: editor; position: relative; overflow: hidden; background: var(--win); }
+.tabs { height: 34px; display: flex; align-items: stretch; border-bottom: 1px solid var(--line); background: var(--chrome); font-family: var(--mono); font-size: 12px; }
+.tab { display: flex; align-items: center; gap: 10px; padding: 0 16px; color: var(--muted); border-right: 1px solid var(--line); }
+.tab.on { color: var(--text); background: var(--win); box-shadow: inset 0 -1px 0 var(--win), inset 0 1px 0 var(--accent); }
+.tab .st { font-size: 11px; }
+.tab .st .a { color: var(--add); } .tab .st .d { color: var(--del); }
+.tab.empty { color: var(--faint); border: 0; }
+
+.pane { position: absolute; inset: 34px 0 0 0; overflow: hidden; }
+.code { position: absolute; left: 0; right: 0; top: 10px; font-family: var(--mono); font-size: 12.5px; line-height: 20px; }
+[data-aspect="9:16"] .code { font-size: 13px; line-height: 21px; }
+.ln { position: relative; display: flex; white-space: pre; padding-right: 16px; }
+.ln .g { flex: none; width: 46px; text-align: right; padding-right: 12px; color: var(--faint); user-select: none; }
+.ln .s { flex: none; width: 18px; color: var(--faint); }
+.ln .t { overflow: hidden; text-overflow: ellipsis; }
+.ln.add { background: var(--add-bg); }
+.ln.add .s { color: var(--add); }
+.ln.del { background: var(--del-bg); }
+.ln.del .s { color: var(--del); }
+.ln.del .t { color: var(--text-2); }
+.ln .wash { position: absolute; inset: 0; pointer-events: none; opacity: 0; }
+.ln.add .wash { background: var(--add-strong); }
+.ln.del .wash { background: var(--del-strong); }
+.ln.hunk { color: var(--muted); }
+.ln.hunk .t { color: var(--muted); font-style: italic; }
+.ln.scan { background: var(--hl); }
+.k { color: var(--kw); } .q { color: var(--str); } .n { color: var(--num); } .c { color: var(--com); font-style: italic; } .f { color: var(--fn); }
+
+/* conversation cards (prompt / plan / message) */
+.talk { position: absolute; inset: 34px 0 0 0; display: flex; flex-direction: column; justify-content: center; padding: 0 56px; }
+[data-aspect="9:16"] .talk { padding: 0 32px; }
+.who { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 14px; letter-spacing: 0.01em; }
+.who .av { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; font-size: 11px; font-weight: 700; background: var(--line-2); color: var(--text); }
+.who .av.me { background: var(--accent); color: var(--accent-ink); }
+.say { font-size: 25px; line-height: 1.42; letter-spacing: -0.012em; color: var(--text); font-weight: 450; white-space: pre-wrap; word-break: break-word; max-height: 400px; overflow: hidden; }
+[data-aspect="9:16"] .say { font-size: 27px; max-height: 640px; }
+.say.reply { font-size: 21px; color: var(--text-2); line-height: 1.5; }
+.say .cur { display: inline-block; width: 2px; height: 1.05em; background: var(--accent); vertical-align: -0.15em; margin-left: 2px; }
+.plan { font-family: var(--mono); font-size: 14px; line-height: 1.9; color: var(--text-2); white-space: pre-wrap; }
+.plan div { display: flex; gap: 12px; }
+.plan .box { flex: none; width: 13px; height: 13px; border: 1.5px solid var(--line-2); border-radius: 3px; margin-top: 7px; }
+
+/* ---------- terminal ---------- */
+.term { grid-area: term; position: relative; border-top: 1px solid var(--line); background: var(--pane); overflow: hidden; }
+.term .head { height: 30px; display: flex; align-items: center; padding: 0 14px; gap: 10px; border-bottom: 1px solid var(--line); }
+.term .head .label { padding: 0; }
+.pill { margin-left: auto; display: none; align-items: center; gap: 7px; font-family: var(--mono); font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 99px; }
+.pill i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: block; }
+.pill.fail { display: flex; color: var(--del); background: var(--del-bg); }
+.pill.pass { display: flex; color: var(--add); background: var(--add-bg); }
+.pill.run { display: flex; color: var(--text-2); background: var(--hl); }
+.tbody { position: absolute; left: 0; right: 0; top: 30px; bottom: 0; overflow: hidden; }
+.tscroll { position: absolute; left: 0; right: 0; bottom: 10px; padding: 0 16px; font-family: var(--mono); font-size: 12px; line-height: 18px; }
+[data-aspect="9:16"] .tscroll { font-size: 12.5px; line-height: 19px; }
+.tl { white-space: pre; overflow: hidden; text-overflow: ellipsis; color: var(--text-2); }
+.tl.cmd { color: var(--text); margin-top: 6px; }
+.tl.cmd .p { color: var(--accent); margin-right: 8px; }
+.tl.old { opacity: 0.45; }
+.tl.err { color: var(--del); }
+.tl.ok { color: var(--add); }
+.tl .cur { display: inline-block; width: 7px; height: 13px; background: var(--text-2); vertical-align: -2px; }
+
+/* ---------- HUD ---------- */
+.hud { display: flex; align-items: center; gap: 26px; height: 72px; padding: 0 4px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+[data-aspect="9:16"] .hud { height: 100px; flex-wrap: wrap; gap: 8px 22px; align-content: center; }
+.stat { display: flex; flex-direction: column; gap: 3px; }
+.stat b { font-size: 15px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.stat span { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
+.scrub { flex: 1; position: relative; height: 22px; cursor: pointer; min-width: 160px; }
+[data-aspect="9:16"] .scrub { flex-basis: 100%; order: 9; }
+.scrub .rail { position: absolute; left: 0; right: 0; top: 10px; height: 2px; background: var(--line-2); border-radius: 2px; }
+.scrub .fill { position: absolute; left: 0; top: 10px; height: 2px; background: var(--text-2); border-radius: 2px; }
+.scrub .tick { position: absolute; top: 6px; width: 2px; height: 10px; border-radius: 1px; background: var(--faint); }
+.scrub .tick.edit { background: var(--muted); }
+.scrub .tick.fail { background: var(--del); }
+.scrub .tick.pass { background: var(--add); }
+.scrub .tick.prompt { background: var(--accent); }
+.mark { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+.mark b { color: var(--text-2); font-weight: 600; }
+
+/* ---------- end card ---------- */
+.end { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 0 96px; background: var(--page); opacity: 0; pointer-events: none; }
+[data-aspect="9:16"] .end { padding: 0 48px; }
+.end .eyebrow { font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: 0.04em; margin-bottom: 18px; }
+.end h1 { font-size: 46px; line-height: 1.1; font-weight: 650; letter-spacing: -0.028em; color: var(--text); max-width: 900px; }
+[data-aspect="9:16"] .end h1 { font-size: 44px; }
+.end .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: 46px; border-top: 1px solid var(--line-2); }
+[data-aspect="9:16"] .end .grid { grid-template-columns: 1fr 1fr; }
+.end .cell { padding: 22px 24px 0 0; }
+[data-aspect="9:16"] .end .cell { padding-bottom: 22px; }
+.end .cell b { display: block; font-size: 34px; font-weight: 600; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; color: var(--text); }
+.end .cell b em { font-style: normal; color: var(--muted); font-weight: 400; margin: 0 6px; }
+.end .cell b .a { color: var(--add); } .end .cell b .d { color: var(--del); }
+.end .cell .lbl { margin-top: 8px; font-size: 13px; color: var(--muted); }
+.end .made { position: absolute; left: 96px; bottom: 44px; font-family: var(--mono); font-size: 12px; color: var(--muted); display: flex; gap: 18px; }
+[data-aspect="9:16"] .end .made { left: 48px; bottom: 60px; }
+.end .made b { color: var(--text-2); font-weight: 500; }
+
+/* retro scanlines */
+[data-theme="retro"] #stage::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0 1px, transparent 1px 3px); }
+[data-theme="retro"] .say, [data-theme="retro"] .end h1, [data-theme="retro"] .stat b { text-shadow: 0 0 6px rgba(141, 255, 154, 0.35); }
+
+/* controls (hidden in capture mode) */
+.ctl { position: fixed; right: 16px; bottom: 14px; display: flex; gap: 6px; font-family: var(--mono); font-size: 11px; opacity: 0; transition: opacity .2s; }
+body:hover .ctl { opacity: 1; }
+.ctl button { font: inherit; color: var(--text-2); background: var(--chrome); border: 1px solid var(--line-2); border-radius: 6px; padding: 5px 9px; cursor: pointer; }
+.capture .ctl { display: none; }
+
+.crumbs { margin-left: auto; display: flex; align-items: center; padding: 0 16px; color: var(--muted); font-size: 11.5px; white-space: pre; }
+.code.created .ln.add { background: transparent; }
+.tflash { position: absolute; inset: 0; pointer-events: none; opacity: 0; }
+.tflash.fail { background: linear-gradient(180deg, var(--del-bg), transparent 70%); box-shadow: inset 0 1px 0 var(--del); }
+.tflash.pass { background: linear-gradient(180deg, var(--add-bg), transparent 70%); box-shadow: inset 0 1px 0 var(--add); }
+.tl.idle .p { color: var(--muted); margin-right: 8px; }
+.pill { transform-origin: right center; }
+</style>
+</head>
+<body data-theme="dark" data-aspect="16:9">
+<div id="viewport"><div id="stage"></div></div>
+<div class="ctl"><button onclick="dispatchEvent(new KeyboardEvent('keydown',{key:' '}))">play/pause</button><button onclick="dispatchEvent(new KeyboardEvent('keydown',{key:'t'}))">theme</button><button onclick="dispatchEvent(new KeyboardEvent('keydown',{key:'a'}))">aspect</button></div>
+<script type="application/json" id="reel-data">{"version":1,"title":"Add a dark mode to the todo app.","project":"todo-app","source":"claude","model":"claude-opus-4-6","duration":30,"endCardAt":25.5,"scenes":[{"kind":"prompt","start":0,"dur":2.983,"realAt":0,"tokens":0,"cost":0,"ev":{"kind":"prompt","at":0,"text":"Add a dark mode to the todo app. It should follow the system setting by default, have a toggle in the header, and remember the choice. Keep the tests green."}},{"kind":"thinking","start":2.983,"dur":1.915,"realAt":30000,"tokens":12842,"cost":0.126535,"ev":{"kind":"thinking","at":30000,"text":"1. Map where colors are hard-coded\n2. Move colors into CSS variables with a dark set\n3. Add a useTheme hook that persists to localStorage\n4. Put a toggle in the header\n5. Cover the hook with tests"}},{"kind":"edit","start":4.898,"dur":2.259,"realAt":390000,"tokens":42366,"cost":0.519805,"ev":{"kind":"edit","at":390000,"path":"src/styles.css","created":false,"diff":[{"op":"+","text":":root {"},{"op":"+","text":"  --bg: #ffffff;"},{"op":"+","text":"  --text: #1d1d1f;"},{"op":"+","text":"  --border: #e5e5e5;"},{"op":"+","text":"  --muted: #6e6e73;"},{"op":"+","text":"}"},{"op":"+","text":""},{"op":"+","text":":root[data-theme=\"dark\"] {"},{"op":"+","text":"  --bg: #111113;"},{"op":"+","text":"  --text: #ececf1;"},{"op":"+","text":"  --border: #2a2a2e;"},{"op":"+","text":"  --muted: #8e8e93;"},{"op":"+","text":"}"},{"op":"+","text":""},{"op":" ","text":".app {"},{"op":" ","text":"  max-width: 640px;"},{"op":"-","text":"  background: #ffffff;"},{"op":"-","text":"  color: #1d1d1f;"},{"op":"+","text":"  background: var(--bg);"},{"op":"+","text":"  color: var(--text);"},{"op":" ","text":"  margin: 48px auto;"},{"op":"+","text":"  transition: background 0.2s, color 0.2s;"}],"added":17,"removed":2}},{"kind":"edit","start":7.157,"dur":2.288,"realAt":726000,"tokens":53978,"cost":0.70489,"ev":{"kind":"edit","at":726000,"path":"src/hooks/useTheme.ts","created":true,"diff":[{"op":"+","text":"import { useEffect, useState } from 'react';"},{"op":"+","text":""},{"op":"+","text":"export type Theme = 'light' | 'dark';"},{"op":"+","text":"const KEY = 'todo.theme';"},{"op":"+","text":""},{"op":"+","text":"function initialTheme(): Theme {"},{"op":"+","text":"  const saved = localStorage.getItem(KEY);"},{"op":"+","text":"  if (saved === 'light' || saved === 'dark') return saved;"},{"op":"+","text":"  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';"},{"op":"+","text":"}"},{"op":"+","text":""},{"op":"+","text":"export function useTheme() {"},{"op":"+","text":"  const [theme, setTheme] = useState\u003cTheme>(initialTheme);"},{"op":"+","text":""},{"op":"+","text":"  useEffect(() => {"},{"op":"+","text":"    document.documentElement.dataset.theme = theme;"},{"op":"+","text":"    localStorage.setItem(KEY, theme);"},{"op":"+","text":"  }, [theme]);"},{"op":"+","text":""},{"op":"+","text":"  const toggle = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));"},{"op":"+","text":"  return { theme, toggle };"},{"op":"+","text":"}"},{"op":"+","text":""}],"added":23,"removed":0}},{"kind":"edit","start":9.445,"dur":2.058,"realAt":948000,"tokens":61484,"cost":0.82102,"ev":{"kind":"edit","at":948000,"path":"src/components/Header.tsx","created":false,"diff":[{"op":"+","text":"import { useTheme } from '../hooks/useTheme';"},{"op":"+","text":""},{"op":" ","text":"export function Header({ count }: { count: number }) {"},{"op":"+","text":"  const { theme, toggle } = useTheme();"},{"op":" ","text":"  return ("},{"op":" ","text":"    \u003cheader className=\"header\">"},{"op":"-","text":"      \u003ch1 style={{ color: \"#1d1d1f\" }}>Todos\u003c/h1>"},{"op":"+","text":"      \u003ch1>Todos\u003c/h1>"},{"op":" ","text":"      \u003cspan className=\"count\">{count} left\u003c/span>"},{"op":"+","text":"      \u003cbutton className=\"theme-toggle\" onClick={toggle} aria-label=\"Toggle dark mode\">"},{"op":"+","text":"        {theme === 'dark' ? 'Light' : 'Dark'}"},{"op":"+","text":"      \u003c/button>"},{"op":" ","text":"    \u003c/header>"},{"op":" ","text":"  );"},{"op":" ","text":"}"}],"added":7,"removed":1}},{"kind":"edit","start":11.503,"dur":2.202,"realAt":1260000,"tokens":68790,"cost":0.94225,"ev":{"kind":"edit","at":1260000,"path":"src/hooks/useTheme.test.ts","created":true,"diff":[{"op":"+","text":"import { act, renderHook } from '@testing-library/react';"},{"op":"+","text":"import { beforeEach, describe, expect, it } from 'vitest';"},{"op":"+","text":"import { useTheme } from './useTheme';"},{"op":"+","text":""},{"op":"+","text":"describe('useTheme', () => {"},{"op":"+","text":"  beforeEach(() => localStorage.clear());"},{"op":"+","text":""},{"op":"+","text":"  it('falls back to the system preference', () => {"},{"op":"+","text":"    const { result } = renderHook(() => useTheme());"},{"op":"+","text":"    expect(result.current.theme).toBe('light');"},{"op":"+","text":"  });"},{"op":"+","text":""},{"op":"+","text":"  it('toggles and remembers the choice', () => {"},{"op":"+","text":"    const { result } = renderHook(() => useTheme());"},{"op":"+","text":"    act(() => result.current.toggle());"},{"op":"+","text":"    expect(result.current.theme).toBe('dark');"},{"op":"+","text":"    expect(localStorage.getItem('todo.theme')).toBe('dark');"},{"op":"+","text":"  });"},{"op":"+","text":"});"},{"op":"+","text":""}],"added":20,"removed":0}},{"kind":"command","start":13.705,"dur":2.489,"realAt":1392000,"tokens":73276,"cost":1.015655,"ev":{"kind":"command","at":1392000,"command":"npm test","output":[" RUN  v3.2.4 ~/code/todo-app",""," ✓ src/hooks/useTodos.test.ts (9 tests) 41ms"," ✓ src/components/TodoList.test.tsx (7 tests) 88ms"," ❯ src/hooks/useTheme.test.ts (2 tests | 2 failed) 12ms","   × useTheme > falls back to the system preference","     → window.matchMedia is not a function","   × useTheme > toggles and remembers the choice","     → window.matchMedia is not a function",""," Test Files  1 failed | 2 passed (3)","      Tests  2 failed | 16 passed (18)","   Duration  1.42s"],"exitOk":false,"isTest":true,"testState":"fail"}},{"kind":"message","start":16.194,"dur":2.106,"realAt":1440000,"tokens":77702,"cost":1.09326,"ev":{"kind":"message","at":1440000,"text":"jsdom doesn't ship matchMedia, so the hook throws before it can read the saved theme. I'll stub it once in the test setup instead of guarding it in app code."}},{"kind":"edit","start":18.3,"dur":2.03,"realAt":1590000,"tokens":84008,"cost":1.20339,"ev":{"kind":"edit","at":1590000,"path":"src/test/setup.ts","created":false,"diff":[{"op":" ","text":"import '@testing-library/jest-dom/vitest';"},{"op":"+","text":"import { vi } from 'vitest';"},{"op":" ","text":""},{"op":"+","text":"// jsdom has no matchMedia; default to a light system theme"},{"op":"+","text":"Object.defineProperty(window, 'matchMedia', {"},{"op":"+","text":"  writable: true,"},{"op":"+","text":"  value: vi.fn((query: string) => ({"},{"op":"+","text":"    matches: false,"},{"op":"+","text":"    media: query,"},{"op":"+","text":"    addEventListener: vi.fn(),"},{"op":"+","text":"    removeEventListener: vi.fn(),"},{"op":"+","text":"  })),"},{"op":"+","text":"});"},{"op":"+","text":""}],"added":12,"removed":0}},{"kind":"command","start":20.33,"dur":2.489,"realAt":1674000,"tokens":87914,"cost":1.27782,"ev":{"kind":"command","at":1674000,"command":"npm test","output":[" RUN  v3.2.4 ~/code/todo-app",""," ✓ src/hooks/useTodos.test.ts (9 tests) 39ms"," ✓ src/components/TodoList.test.tsx (7 tests) 85ms"," ✓ src/hooks/useTheme.test.ts (2 tests) 9ms",""," Test Files  3 passed (3)","      Tests  18 passed (18)","   Duration  1.37s"],"exitOk":true,"isTest":true,"testState":"pass","redToGreen":true}},{"kind":"message","start":22.819,"dur":2.681,"realAt":2832000,"tokens":98792,"cost":1.517635,"ev":{"kind":"message","at":2832000,"text":"Dark mode is in. It follows the system setting until you use the new toggle in the header, then remembers the choice. Colors now live in CSS variables, and all 18 tests pass.","final":true}}],"touches":[{"path":"src/App.tsx","at":3.206,"type":"read"},{"path":"src/styles.css","at":4.898,"type":"read"},{"path":"src/styles.css","at":4.898,"type":"edit"},{"path":"src/styles.css","at":5.261,"type":"edit"},{"path":"src/hooks/useTheme.ts","at":7.157,"type":"create"},{"path":"src/components/Header.tsx","at":9.445,"type":"edit"},{"path":"src/hooks/useTheme.test.ts","at":11.503,"type":"create"},{"path":"src/test/setup.ts","at":18.3,"type":"edit"}],"stats":{"durationMs":2832000,"toolCalls":13,"filesTouched":["src/App.tsx","src/styles.css","src/hooks/useTheme.ts","src/components/Header.tsx","src/hooks/useTheme.test.ts","src/test/setup.ts"],"tokens":98792,"usage":{"input":102,"output":18590,"cacheRead":1103500,"cacheWrite":80100},"costUsd":1.517635,"model":"claude-opus-4-6","linesAdded":80,"linesRemoved":4,"prompts":1},"generator":"vibereel"}</script>
+<script>/* vibereel player: render(t) is a pure function of time, so playback and frame capture agree exactly. */
+(function () {
+  'use strict';
+  var R = JSON.parse(document.getElementById('reel-data').textContent);
+  var qs = new URLSearchParams(location.search);
+  var body = document.body;
+  var capture = qs.has('capture');
+  if (capture) body.classList.add('capture');
+  if (qs.get('theme')) body.dataset.theme = qs.get('theme');
+  if (qs.get('aspect')) body.dataset.aspect = qs.get('aspect');
+
+  var AGENT = R.source === 'codex' ? 'Codex' : 'Claude';
+  var AGENT_APP = R.source === 'codex' ? 'Codex' : 'Claude Code';
+
+  /* ---------- helpers ---------- */
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function clamp(x, a, b) { return x < a ? a : x > b ? b : x; }
+  function easeOut(x) { x = clamp(x, 0, 1); return 1 - Math.pow(1 - x, 3); }
+  function easeInOut(x) { x = clamp(x, 0, 1); return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; }
+  function lerp(a, b, f) { return a + (b - a) * f; }
+  function fmtTokens(n) {
+    if (n >= 1e6) return (n / 1e6).toFixed(n >= 1e7 ? 1 : 2) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(n >= 1e5 ? 0 : 1) + 'k';
+    return String(Math.round(n));
+  }
+  function fmtCost(c) { return '$' + (c >= 100 ? c.toFixed(0) : c.toFixed(2)); }
+  function fmtClock(ms) {
+    var s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60;
+    return (h ? h + ':' + String(m).padStart(2, '0') : String(m)) + ':' + String(r).padStart(2, '0');
+  }
+  function fmtSpan(ms) {
+    var m = Math.round(ms / 60000);
+    if (ms < 60000) return Math.max(1, Math.round(ms / 1000)) + 's';
+    if (m < 60) return m + 'm';
+    return Math.floor(m / 60) + 'h ' + (m % 60) + 'm';
+  }
+  function base(p) { return p.split('/').pop(); }
+
+  var KW = /^(const|let|var|function|return|if|else|for|while|import|from|export|default|class|extends|new|this|async|await|try|catch|throw|type|interface|def|self|None|True|False|true|false|null|undefined|fn|pub|use|mut|impl|struct|enum|match|package|func|in|of|as|with|yield|lambda|not|and|or|is|elif|public|private|static|void|int|string|boolean)$/;
+  var TOK = /(\/\/.*$|#(?![0-9a-fA-F]{3,8}\b).*$|\/\*.*?\*\/|<!--.*?-->)|("(?:[^"\\]|\\.)*"?|'(?:[^'\\]|\\.)*'?|`(?:[^`\\]|\\.)*`?)|(\b\d[\d_.]*(?:px|rem|em|ms|s|%)?\b|#[0-9a-fA-F]{3,8}\b)|([A-Za-z_$][\w$-]*)(?=\s*\()|([A-Za-z_$][\w$]*)/gm;
+  function hl(line) {
+    var out = '', last = 0, m;
+    TOK.lastIndex = 0;
+    while ((m = TOK.exec(line))) {
+      out += esc(line.slice(last, m.index));
+      if (m[1]) out += '<span class="c">' + esc(m[1]) + '</span>';
+      else if (m[2]) out += '<span class="q">' + esc(m[2]) + '</span>';
+      else if (m[3]) out += '<span class="n">' + esc(m[3]) + '</span>';
+      else if (m[4]) out += KW.test(m[4]) ? '<span class="k">' + esc(m[4]) + '</span>' : '<span class="f">' + esc(m[4]) + '</span>';
+      else if (m[5]) out += KW.test(m[5]) ? '<span class="k">' + esc(m[5]) + '</span>' : esc(m[5]);
+      last = TOK.lastIndex;
+      if (m[0] === '') TOK.lastIndex++;
+    }
+    return out + esc(line.slice(last));
+  }
+
+  /* ---------- precompute ---------- */
+  var scenes = R.scenes;
+  var tests = [];
+  scenes.forEach(function (s) { if (s.ev.kind === 'command' && s.ev.isTest) tests.push(s); });
+
+  // diff display: collapse long unchanged runs
+  function prepDiff(diff) {
+    var rows = [], i, n = diff.length, ctx = 3;
+    var changed = diff.map(function (d) { return d.op !== ' '; });
+    var near = diff.map(function (_, i) {
+      for (var k = Math.max(0, i - ctx); k <= Math.min(n - 1, i + ctx); k++) if (changed[k]) return true;
+      return false;
+    });
+    var ln = 1, skipped = 0;
+    for (i = 0; i < n; i++) {
+      var d = diff[i];
+      if (d.op !== '-') ln++;
+      if (!near[i] && n > 14) { skipped++; continue; }
+      if (skipped) { rows.push({ op: 'hunk', text: '⋯ ' + skipped + ' unchanged lines' }); skipped = 0; }
+      rows.push({ op: d.op, text: d.text, no: d.op === '-' ? '' : ln - 1 });
+    }
+    if (skipped) rows.push({ op: 'hunk', text: '⋯ ' + skipped + ' unchanged lines' });
+    if (rows.length > 90) { var more = rows.length - 88; rows = rows.slice(0, 88); rows.push({ op: 'hunk', text: '⋯ ' + more + ' more lines' }); }
+    // reveal schedule: changed lines one after another, context with the next change
+    var ch = rows.filter(function (r) { return r.op === '+' || r.op === '-'; }).length || 1;
+    var span = Math.min(0.62, 0.18 + ch * 0.03);
+    var order = [];
+    rows.forEach(function (r, idx) { if (r.op === '+' || r.op === '-') order.push(idx); });
+    order.forEach(function (idx, j) { rows[idx].at = 0.1 + span * (j / ch); });
+    rows.forEach(function (r) { if (r.at == null) r.at = 0.06; });
+    return rows;
+  }
+  scenes.forEach(function (s) { if (s.ev.kind === 'edit') s.rows = prepDiff(s.ev.diff); });
+
+  // file tree
+  var touchesByPath = {};
+  R.touches.forEach(function (t) { (touchesByPath[t.path] = touchesByPath[t.path] || []).push(t); });
+  var paths = Object.keys(touchesByPath);
+
+  function buildTreeRows(maxRows) {
+    var sorted = paths.slice().sort(function (a, b) {
+      var A = a.split('/'), B = b.split('/');
+      for (var i = 0; i < Math.min(A.length, B.length); i++) {
+        if (A[i] === B[i]) continue;
+        var ad = i < A.length - 1, bd = i < B.length - 1;
+        if (ad !== bd) return ad ? -1 : 1;
+        return A[i] < B[i] ? -1 : 1;
+      }
+      return A.length - B.length;
+    });
+    var rows = [], open = [];
+    sorted.forEach(function (p) {
+      var parts = p.split('/');
+      var dirs = parts.slice(0, -1);
+      var k = 0;
+      while (k < open.length && open[k] === dirs[k]) k++;
+      open = open.slice(0, k);
+      for (; k < dirs.length; k++) { rows.push({ dir: true, name: dirs[k], depth: k }); open.push(dirs[k]); }
+      rows.push({ path: p, name: parts[parts.length - 1], depth: dirs.length });
+    });
+    if (rows.length <= maxRows) return rows;
+    // too many: flat list, edited files first
+    var score = function (p) { return touchesByPath[p].some(function (t) { return t.type !== 'read'; }) ? 0 : 1; };
+    var flat = paths.slice().sort(function (a, b) { return score(a) - score(b) || touchesByPath[a][0].at - touchesByPath[b][0].at; });
+    var keep = flat.slice(0, maxRows - 1).map(function (p) { return { path: p, name: p.length > 30 ? '…' + p.slice(-29) : p, depth: 0 }; });
+    keep.push({ more: true, name: '+ ' + (flat.length - keep.length) + ' more files' });
+    return keep;
+  }
+
+  /* ---------- DOM ---------- */
+  var stage = document.getElementById('stage');
+  var el = {};
+  function build() {
+    var vertical = body.dataset.aspect === '9:16';
+    var model = R.model ? '<span class="badge">' + esc(R.model) + '</span>' : '';
+    stage.innerHTML =
+      '<div class="win">' +
+        '<div class="bar"><div class="dots"><i></i><i></i><i></i></div>' +
+          '<div class="crumb"><b>' + esc(R.project) + '</b></div>' +
+          '<div class="now" id="now"></div>' +
+          '<span class="badge">' + AGENT_APP + '</span>' + (vertical ? '' : model) +
+        '</div>' +
+        '<div class="tree"><div class="label"><span>Files</span><span id="fcount"></span></div><div class="rows" id="rows"></div></div>' +
+        '<div class="editor"><div class="tabs" id="tabs"></div><div id="ed"></div></div>' +
+        '<div class="term"><div class="head"><div class="label">Terminal</div><div class="pill" id="pill"><i></i><span></span></div></div>' +
+          '<div class="tbody"><div class="tscroll" id="tscroll"></div></div><div class="tflash" id="tflash"></div></div>' +
+      '</div>' +
+      '<div class="hud">' +
+        '<div class="stat"><b id="h-real">0:00</b><span>real time</span></div>' +
+        '<div class="stat"><b id="h-reel">0:00</b><span>replay</span></div>' +
+        '<div class="stat"><b id="h-tok">0</b><span>tokens</span></div>' +
+        '<div class="stat"><b id="h-cost">$0.00</b><span>est. cost</span></div>' +
+        '<div class="stat"><b id="h-tools">0</b><span>tool calls</span></div>' +
+        '<div class="scrub" id="scrub"><div class="rail"></div><div class="fill" id="fill"></div></div>' +
+        '<div class="mark"><b>vibereel</b></div>' +
+      '</div>' +
+      '<div class="end" id="end"></div>';
+    ['now', 'rows', 'tabs', 'ed', 'pill', 'tscroll', 'h-real', 'h-reel', 'h-tok', 'h-cost', 'h-tools', 'scrub', 'fill', 'end', 'fcount', 'tflash'].forEach(function (id) { el[id] = document.getElementById(id); });
+
+    var maxRows = vertical ? 12 : 23;
+    var tr = buildTreeRows(maxRows);
+    el.rows.innerHTML = tr.map(function (r) {
+      var pad = 14 + r.depth * 12;
+      if (r.more) return '<div class="row more" style="padding-left:14px"><span class="nm">' + esc(r.name) + '</span></div>';
+      if (r.dir) return '<div class="row dir" style="padding-left:' + pad + 'px"><span class="nm">' + esc(r.name) + '/</span></div>';
+      return '<div class="row" data-p="' + esc(r.path) + '" style="padding-left:' + pad + 'px"><span class="flash"></span><span class="nm">' + esc(r.name) + '</span><span class="tag"></span></div>';
+    }).join('');
+    el.treeRows = Array.prototype.slice.call(el.rows.querySelectorAll('.row[data-p]'));
+
+    // scrub ticks
+    var ticks = '';
+    scenes.forEach(function (s) {
+      var cls = s.ev.kind === 'prompt' ? 'prompt' : s.ev.kind === 'edit' ? 'edit' : s.ev.kind === 'command' && s.ev.isTest ? s.ev.testState : '';
+      if (cls) ticks += '<div class="tick ' + cls + '" style="left:' + (100 * s.start / R.duration).toFixed(2) + '%"></div>';
+    });
+    el.scrub.insertAdjacentHTML('beforeend', ticks);
+    el.scrub.onclick = function (e) {
+      var r = el.scrub.getBoundingClientRect();
+      seekPlay(R.duration * clamp((e.clientX - r.left) / r.width, 0, 1));
+    };
+    buildEnd();
+    lastEd = lastTerm = null;
+    fit();
+  }
+
+  function buildEnd() {
+    var st = R.stats;
+    var eyebrow = [R.project, AGENT_APP, R.model].filter(Boolean).map(esc).join('  ·  ');
+    var files = st.filesTouched.length;
+    el.end.innerHTML =
+      '<div class="eyebrow e0">' + eyebrow + '</div>' +
+      '<h1 class="e1">' + esc(R.title) + '</h1>' +
+      '<div class="grid">' +
+        cell('e2', fmtSpan(st.durationMs) + '<em>→</em>' + Math.round(R.duration) + 's', 'of work, replayed') +
+        cell('e3', String(st.toolCalls), 'tool calls') +
+        cell('e4', '<span class="a">+' + st.linesAdded + '</span> <span class="d">−' + st.linesRemoved + '</span>', files + ' file' + (files === 1 ? '' : 's') + ' touched') +
+        cell('e5', fmtTokens(st.tokens), 'tokens  ·  ' + fmtCost(st.costUsd) + ' est.') +
+      '</div>' +
+      '<div class="made e6"><span>made with <b>vibereel</b></span><span>npx vibereel</span></div>';
+    function cell(c, v, l) { return '<div class="cell ' + c + '"><b>' + v + '</b><div class="lbl">' + l + '</div></div>'; }
+  }
+
+  function fit() {
+    var w = body.dataset.aspect === '9:16' ? 720 : 1280, h = body.dataset.aspect === '9:16' ? 1280 : 720;
+    var s = capture ? Math.min(innerWidth / w, innerHeight / h) : Math.min(innerWidth / w, innerHeight / h);
+    stage.style.transform = 'scale(' + s + ')';
+  }
+  addEventListener('resize', fit);
+
+  /* ---------- render ---------- */
+  function sceneAt(t) {
+    var idx = -1;
+    for (var i = 0; i < scenes.length; i++) { if (scenes[i].start <= t) idx = i; else break; }
+    return idx;
+  }
+
+  function hudAt(t) {
+    var st = R.stats, n = scenes.length;
+    if (!n || t >= R.endCardAt) return { real: st.durationMs, tok: st.tokens, cost: st.costUsd, tools: st.toolCalls };
+    var i = Math.max(0, sceneAt(t)), a = scenes[i], b = scenes[i + 1];
+    var bx = b ? { real: b.realAt, tok: b.tokens, cost: b.cost, start: b.start } : { real: st.durationMs, tok: st.tokens, cost: st.costUsd, start: R.endCardAt };
+    var f = easeInOut((t - a.start) / Math.max(0.001, bx.start - a.start));
+    var real = lerp(a.realAt, bx.real, f);
+    var tools = 0;
+    // tool calls: proportion of real time elapsed, honest enough for a counter
+    tools = Math.round(st.toolCalls * (st.durationMs ? real / st.durationMs : t / R.endCardAt));
+    return { real: real, tok: lerp(a.tokens, bx.tok, f), cost: lerp(a.cost, bx.cost, f), tools: tools };
+  }
+
+  var EDITOR_KINDS = { prompt: 1, thinking: 1, message: 1, edit: 1, read: 1 };
+  var lastEd = null, lastTerm = null;
+
+  function nowLabel(s) {
+    var e = s.ev;
+    switch (e.kind) {
+      case 'prompt': return 'Prompt';
+      case 'thinking': return 'Planning';
+      case 'edit': return (e.created ? 'Creating ' : 'Editing ') + e.path;
+      case 'read': return 'Reading ' + e.path;
+      case 'search': return 'Searching “' + e.query + '”';
+      case 'command': return e.isTest ? 'Running tests' : '$ ' + e.command.split('\n')[0];
+      case 'tool': return e.name + (e.detail ? ' · ' + e.detail : '');
+      case 'message': return e.final ? 'Done' : 'Replying';
+    }
+    return '';
+  }
+
+  function renderEditor(t, si) {
+    // the editor shows the most recent editor-type scene
+    var k = si;
+    while (k >= 0 && !EDITOR_KINDS[scenes[k].ev.kind]) k--;
+    if (k < 0) { if (lastEd !== -1) { el.tabs.innerHTML = '<div class="tab empty">no file open</div>'; el.ed.innerHTML = ''; lastEd = -1; } return; }
+    var s = scenes[k], e = s.ev;
+    var lt = k === si ? t - s.start : s.dur + 10;
+    var p = lt / s.dur;
+    if (lastEd !== k) {
+      lastEd = k;
+      if (e.kind === 'edit') {
+        el.tabs.innerHTML = '<div class="tab on"><span>' + esc(base(e.path)) + '</span><span class="st"><span class="a">+' + e.added + '</span> <span class="d">−' + e.removed + '</span></span></div>' +
+          '<div class="crumbs">' + esc(e.path.split('/').join('  /  ')) + '</div>';
+        el.ed.innerHTML = '<div class="pane"><div class="code' + (e.created ? ' created' : '') + '" id="code">' + s.rows.map(function (r) {
+          var cls = r.op === '+' ? 'add' : r.op === '-' ? 'del' : r.op === 'hunk' ? 'hunk' : '';
+          var sign = r.op === '+' ? '+' : r.op === '-' ? '−' : '';
+          return '<div class="ln ' + cls + '"><span class="wash"></span><span class="g">' + (r.no || '') + '</span><span class="s">' + sign + '</span><span class="t">' + (r.op === 'hunk' ? esc(r.text) : hl(r.text)) + '</span></div>';
+        }).join('') + '</div></div>';
+      } else if (e.kind === 'read') {
+        var pv = (e.preview && e.preview.length ? e.preview : ['']).slice(0, 40);
+        el.tabs.innerHTML = '<div class="tab on"><span>' + esc(base(e.path)) + '</span><span class="st" style="color:var(--muted)">read</span></div><div class="crumbs">' + esc(e.path.split('/').join('  /  ')) + '</div>';
+        el.ed.innerHTML = '<div class="pane"><div class="code" id="code">' + pv.map(function (l, i) {
+          return '<div class="ln"><span class="g">' + (i + 1) + '</span><span class="s"></span><span class="t">' + hl(l) + '</span></div>';
+        }).join('') + '</div></div>';
+      } else {
+        var who = e.kind === 'prompt' ? '<div class="who"><span class="av me">Y</span>You</div>'
+          : '<div class="who"><span class="av">' + AGENT[0] + '</span>' + AGENT + (e.kind === 'thinking' ? ' · plan' : '') + '</div>';
+        var bodyHtml;
+        if (e.kind === 'thinking' && /^\s*(\d+[.)]|[-*])\s/m.test(e.text)) {
+          bodyHtml = '<div class="plan" id="plan">' + e.text.split('\n').filter(function (l) { return l.trim(); }).slice(0, 8).map(function (l) {
+            return '<div><span class="box"></span><span>' + esc(l.replace(/^\s*(\d+[.)]|[-*])\s*/, '')) + '</span></div>';
+          }).join('') + '</div>';
+        } else {
+          bodyHtml = '<div class="say' + (e.kind === 'prompt' ? '' : ' reply') + '" id="say"></div>';
+        }
+        el.tabs.innerHTML = '<div class="tab on"><span>' + (e.kind === 'prompt' ? 'prompt' : e.kind === 'thinking' ? 'plan' : 'reply') + '</span></div>';
+        el.ed.innerHTML = '<div class="talk" id="talk">' + who + bodyHtml + '</div>';
+      }
+    }
+    var fade = easeOut(lt / 0.28);
+    var host = el.ed.firstChild;
+    if (host) { host.style.opacity = fade; host.style.transform = 'translateY(' + ((1 - fade) * 8).toFixed(2) + 'px)'; }
+
+    if (e.kind === 'edit') {
+      var code = document.getElementById('code');
+      var lines = code.children, lastShown = 0;
+      for (var i = 0; i < s.rows.length; i++) {
+        var r = s.rows[i], q = clamp((p - r.at) / 0.07, 0, 1), node = lines[i];
+        if (q > 0) lastShown = i;
+        node.style.opacity = easeOut(q);
+        node.style.transform = r.op === '+' ? 'translateX(' + ((1 - easeOut(q)) * -14).toFixed(2) + 'px)' : '';
+        var w = node.firstChild;
+        w.style.opacity = r.op === '+' || r.op === '-' ? (q > 0 ? clamp(1 - (p - r.at) * s.dur / 0.9, 0, 0.9) : 0) : 0;
+      }
+      var paneH = code.parentNode.clientHeight, lh = lines[0] ? lines[0].offsetHeight : 20;
+      var want = Math.max(0, (lastShown + 5) * lh - paneH);
+      var maxScroll = Math.max(0, lines.length * lh - paneH + 20);
+      code.style.transform = 'translateY(' + (-Math.min(want, maxScroll)).toFixed(1) + 'px)';
+    } else if (e.kind === 'read') {
+      var c2 = document.getElementById('code'), ls = c2.children;
+      var scanRow = Math.floor(easeInOut(p / 0.85) * Math.min(ls.length, 18));
+      for (var j = 0; j < ls.length; j++) ls[j].classList.toggle('scan', k === si && j === scanRow);
+    } else {
+      var say = document.getElementById('say');
+      if (say) {
+        var text = e.text.length > 320 ? e.text.slice(0, 318) + '…' : e.text;
+        var rate = e.kind === 'prompt' ? 0.72 : 0.5;
+        var n = Math.round(text.length * easeInOut(clamp((p - 0.06) / rate, 0, 1)));
+        var cursor = k === si && (n < text.length || Math.floor(lt * 2.2) % 2 === 0) ? '<span class="cur"></span>' : '';
+        say.innerHTML = esc(text.slice(0, n)) + cursor;
+      }
+      var plan = document.getElementById('plan');
+      if (plan) {
+        var items = plan.children;
+        for (var m = 0; m < items.length; m++) {
+          var qq = easeOut(clamp((p - 0.08 - m * 0.09) / 0.12, 0, 1));
+          items[m].style.opacity = qq; items[m].style.transform = 'translateY(' + ((1 - qq) * 6).toFixed(1) + 'px)';
+        }
+      }
+    }
+  }
+
+  function classify(line) {
+    if (/(\bfail(ed|ing|ure)?\b|\berror\b|✗|✕|×|\bFAIL\b|Traceback|AssertionError|expected .* (to|but))/i.test(line)) return ' err';
+    if (/(\bpass(ed|ing)?\b|✓|✔|\bok\b|\bPASS\b|\bsuccess)/i.test(line)) return ' ok';
+    return '';
+  }
+
+  function renderTerm(t, si) {
+    var cmds = [];
+    for (var i = 0; i <= si; i++) if (scenes[i].ev.kind === 'command') cmds.push(i);
+    var cur = cmds.length && cmds[cmds.length - 1] === si ? si : -1;
+    var html = '';
+    var keep = cmds.slice(-4);
+    keep.forEach(function (k) {
+      var s = scenes[k], e = s.ev, old = k !== cur;
+      var lt = old ? 1e9 : t - s.start;
+      var cmd = e.command.split('\n')[0];
+      var typeDur = Math.min(0.9, s.dur * 0.3);
+      var typed = Math.round(cmd.length * clamp(lt / typeDur, 0, 1));
+      var caret = !old && typed < cmd.length ? '<span class="cur"></span>' : '';
+      html += '<div class="tl cmd' + (old ? ' old' : '') + '"><span class="p">❯</span>' + esc(cmd.slice(0, typed)) + caret + '</div>';
+      var outStart = typeDur + 0.25, outSpan = s.dur * 0.42;
+      var out = e.output.length > 12 ? e.output.slice(-12) : e.output;
+      var shown = old ? out.length : Math.floor(out.length * clamp((lt - outStart) / outSpan, 0, 1) + (lt > outStart ? 1 : 0));
+      shown = Math.min(shown, out.length);
+      for (var j = 0; j < shown; j++) html += '<div class="tl' + (old ? ' old' : '') + classify(out[j]) + '">' + esc(out[j] || ' ') + '</div>';
+      if (!old && lt > typeDur && shown === 0) html += '<div class="tl"><span class="cur"></span></div>';
+    });
+    if (!keep.length) html = '<div class="tl idle"><span class="p">❯</span>' + (Math.floor(t * 2.2) % 2 === 0 ? '<span class="cur"></span>' : '') + '</div>';
+    if (html !== lastTerm) { el.tscroll.innerHTML = html; lastTerm = html; }
+
+    // test pill
+    var pill = el.pill, state = '', label = '';
+    for (var q = tests.length - 1; q >= 0; q--) {
+      var ts = tests[q];
+      if (ts.start > t) continue;
+      var lt2 = t - ts.start, done = lt2 > Math.min(0.9, ts.dur * 0.3) + 0.25 + ts.dur * 0.3;
+      if (!done) { state = 'run'; label = 'running tests'; }
+      else if (ts.ev.testState === 'fail') { state = 'fail'; label = 'tests failing'; }
+      else { state = 'pass'; label = 'tests passing'; }
+      break;
+    }
+    pill.className = 'pill ' + state;
+    pill.lastChild.textContent = label;
+    // result moment: tint the terminal and pop the pill when a test run lands
+    var fl = 0, flCls = '';
+    if (q >= 0 && (state === 'fail' || state === 'pass')) {
+      var ts2 = tests[q], landed = ts2.start + Math.min(0.9, ts2.dur * 0.3) + 0.25 + ts2.dur * 0.3;
+      var since = t - landed;
+      if (since >= 0 && since < 1.4) { fl = 1 - since / 1.4; flCls = state; }
+      var pop = since >= 0 && since < 0.35 ? 1 + 0.12 * Math.sin(Math.PI * since / 0.35) : 1;
+      pill.style.transform = 'scale(' + pop.toFixed(3) + ')';
+    }
+    el.tflash.className = 'tflash ' + flCls;
+    el.tflash.style.opacity = (fl * fl).toFixed(3);
+  }
+
+  function renderTree(t, si) {
+    var active = si >= 0 && t < R.endCardAt && (scenes[si].ev.kind === 'edit' || scenes[si].ev.kind === 'read') ? scenes[si].ev.path : null;
+    var touched = 0;
+    for (var p in touchesByPath) if (touchesByPath[p][0].at <= t) touched++;
+    el.fcount.textContent = touched ? touched : '';
+    el.treeRows.forEach(function (row) {
+      var list = touchesByPath[row.dataset.p], seen = false, changed = false, created = false, lastAt = -1;
+      for (var i = 0; i < list.length; i++) {
+        var x = list[i];
+        if (x.at > t) continue;
+        seen = true; lastAt = Math.max(lastAt, x.at);
+        if (x.type === 'edit') changed = true;
+        if (x.type === 'create') created = true;
+      }
+      row.classList.toggle('seen', seen);
+      row.classList.toggle('changed', changed || created);
+      row.classList.toggle('active', row.dataset.p === active);
+      var tag = row.lastChild;
+      var txt = created ? 'A' : changed ? 'M' : '';
+      if (tag.textContent !== txt) { tag.textContent = txt; tag.className = 'tag ' + txt; }
+      row.firstChild.style.opacity = lastAt >= 0 ? (0.2 * clamp(1 - (t - lastAt) / 0.9, 0, 1)).toFixed(3) : 0;
+    });
+  }
+
+  function renderEnd(t) {
+    var lt = t - R.endCardAt;
+    var o = easeOut(lt / 0.45);
+    el.end.style.opacity = lt > 0 ? o : 0;
+    if (lt <= 0) return;
+    for (var i = 0; i <= 6; i++) {
+      var node = el.end.querySelector('.e' + i);
+      if (!node) continue;
+      var q = easeOut((lt - 0.15 - i * 0.09) / 0.5);
+      node.style.opacity = q; node.style.transform = 'translateY(' + ((1 - q) * 12).toFixed(1) + 'px)';
+    }
+  }
+
+  function render(t) {
+    t = clamp(t, 0, R.duration);
+    var si = sceneAt(t);
+    if (si >= 0) {
+      el.now.innerHTML = t < R.endCardAt ? '<span class="dot"></span>' + esc(nowLabel(scenes[si])) : '';
+    }
+    renderEditor(t, si);
+    renderTerm(t, si);
+    renderTree(t, si);
+    var h = hudAt(t);
+    el['h-real'].textContent = fmtClock(h.real);
+    el['h-reel'].textContent = fmtClock(Math.min(t, R.endCardAt) * 1000) + (R.stats.durationMs > 60000 ? '  ·  ' + Math.round(R.stats.durationMs / 1000 / Math.max(1, R.endCardAt)) + '×' : '');
+    el['h-tok'].textContent = fmtTokens(h.tok);
+    el['h-cost'].textContent = fmtCost(h.cost);
+    el['h-tools'].textContent = String(h.tools);
+    el.fill.style.width = (100 * t / R.duration).toFixed(2) + '%';
+    renderEnd(t);
+  }
+
+  /* ---------- playback ---------- */
+  var playing = false, t0 = 0, tNow = 0, raf = 0;
+  function frame(now) {
+    tNow = (now - t0) / 1000;
+    if (tNow >= R.duration) { tNow = R.duration; playing = false; }
+    render(tNow);
+    if (playing) raf = requestAnimationFrame(frame);
+  }
+  function play() { if (tNow >= R.duration) tNow = 0; playing = true; t0 = performance.now() - tNow * 1000; cancelAnimationFrame(raf); raf = requestAnimationFrame(frame); }
+  function pause() { playing = false; cancelAnimationFrame(raf); }
+  function seekPlay(t) { tNow = t; render(t); if (playing) play(); }
+
+  var THEMES = ['dark', 'light', 'retro'];
+  addEventListener('keydown', function (e) {
+    if (e.key === ' ') { e.preventDefault(); playing ? pause() : play(); }
+    else if (e.key === 'ArrowRight') seekPlay(Math.min(R.duration, tNow + 2));
+    else if (e.key === 'ArrowLeft') seekPlay(Math.max(0, tNow - 2));
+    else if (e.key === 'r') { tNow = 0; play(); }
+    else if (e.key === 't') { body.dataset.theme = THEMES[(THEMES.indexOf(body.dataset.theme) + 1) % 3]; render(tNow); }
+    else if (e.key === 'a') { body.dataset.aspect = body.dataset.aspect === '9:16' ? '16:9' : '9:16'; build(); render(tNow); }
+  });
+  document.getElementById('stage').addEventListener('click', function (e) { if (!e.target.closest('#scrub')) { playing ? pause() : play(); } });
+
+  build();
+  render(0);
+  window.__reel = { duration: R.duration, seek: function (t) { tNow = t; render(t); }, ready: true };
+  if (!capture) setTimeout(play, 400);
+})();
+</script>
+</body>
+</html>
