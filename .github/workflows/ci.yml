@@ -5,13 +5,16 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        node: [20, 22]
+        node: [20, 22, 24]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,3 +24,11 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
+      - name: Smoke test the packed CLI
+        run: |
+          npm pack
+          mkdir -p /tmp/smoke && cd /tmp/smoke && npm init -y > /dev/null
+          npm install "$GITHUB_WORKSPACE"/vibereel-*.tgz
+          npx vibereel --help
+          npx vibereel --file "$GITHUB_WORKSPACE/fixtures/demo-dark-mode.jsonl" --out reel.html
+          test -s reel.html

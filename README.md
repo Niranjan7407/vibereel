@@ -2,6 +2,11 @@
 
 Turn your last Claude Code or Codex session into a 30-second film you can actually share.
 
+[![npm version](https://img.shields.io/npm/v/vibereel.svg)](https://www.npmjs.com/package/vibereel)
+[![npm downloads](https://img.shields.io/npm/dm/vibereel.svg)](https://www.npmjs.com/package/vibereel)
+[![CI](https://github.com/TanbirRamim/vibereel/actions/workflows/ci.yml/badge.svg)](https://github.com/TanbirRamim/vibereel/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 ![A 47-minute session adding dark mode to a todo app, replayed in 30 seconds](assets/demo.gif)
 
 That's a 47-minute session squeezed into 30 seconds: the prompt, the plan, the edits, a failing test run, the fix, and the green run. ([MP4](assets/demo.mp4) · [interactive HTML](assets/demo.html))
@@ -73,6 +78,27 @@ Sessions are read from `~/.claude/projects` and `~/.codex/sessions`. `CLAUDE_CON
 - Video export takes about a minute, because it renders each frame in headless Chrome.
 - Redaction is pattern-based. It's good, not perfect.
 
+## FAQ
+
+**Does anything leave my machine?**
+No. vibereel reads the session file, writes an HTML file, and that's it. No network calls, no telemetry. The player itself has no external requests either.
+
+**Which agents work?**
+Claude Code and Codex CLI today. Cursor and Gemini CLI parsers are open issues if you want to help.
+
+**Why is my reel only a few seconds long?**
+Short sessions don't have enough moments to fill 30 seconds, so vibereel doesn't pad them. Use `--duration` to ask for a different length.
+
+**Video export says Chrome or ffmpeg is missing.**
+Install ffmpeg (`brew install ffmpeg`, `apt install ffmpeg`, `winget install ffmpeg`) and point `CHROME_PATH` at any Chromium based browser. The HTML is still written either way.
+
+**Can I post a reel of someone else's session?**
+Only with their OK. Sessions often contain private code even after redaction.
+
+## Contributing
+
+Issues labelled [good first issue](https://github.com/TanbirRamim/vibereel/labels/good%20first%20issue) are a nice way in, and new parsers and themes are very welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, and please never attach real session logs to issues or PRs. Changes are listed in the [CHANGELOG](CHANGELOG.md). Security reports go through [SECURITY.md](SECURITY.md).
+
 ## Development
 
 ```sh
@@ -85,4 +111,4 @@ The demo session in `fixtures/` is written by hand (`node fixtures/make-demo.mjs
 
 ## License
 
-MIT
+[MIT](LICENSE)

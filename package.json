@@ -2,6 +2,14 @@
   "name": "vibereel",
   "version": "0.1.0",
   "description": "Turn your latest Claude Code or Codex session into a 30-second shareable film.",
+  "homepage": "https://github.com/TanbirRamim/vibereel#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TanbirRamim/vibereel.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TanbirRamim/vibereel/issues"
+  },
   "type": "module",
   "bin": {
     "vibereel": "dist/cli.js"
@@ -10,7 +18,8 @@
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "engines": {
     "node": ">=20"
@@ -18,7 +27,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json && mkdir -p dist/player && cp src/player/client.js src/player/player.css dist/player/ && chmod +x dist/cli.js",
     "test": "vitest run",
-    "demo": "npm run build && node dist/cli.js --file fixtures/demo-dark-mode.jsonl --out assets/demo.html --gif --mp4"
+    "demo": "npm run build && node dist/cli.js --file fixtures/demo-dark-mode.jsonl --out assets/demo.html --gif --mp4",
+    "prepublishOnly": "npm run build && npm test"
   },
   "keywords": [
     "claude-code",
@@ -27,7 +37,15 @@
     "replay",
     "video",
     "gif",
-    "cli"
+    "cli",
+    "claude",
+    "anthropic",
+    "openai",
+    "session",
+    "transcript",
+    "screencast",
+    "developer-tools",
+    "terminal"
   ],
   "license": "MIT",
   "author": "Tanbir Hossain Ramim",
@@ -37,6 +55,6 @@
   "devDependencies": {
     "@types/node": "^26.6.5",
     "typescript": "^7.0.2",
-    "vitest": "^3.2.7"
+    "vitest": "^4.1.0"
   }
 }

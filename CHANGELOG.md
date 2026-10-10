@@ -1,0 +1,22 @@
+# Changelog
+
+All notable changes to this project are written down here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semver](https://semver.org/).
+
+## [Unreleased]
+
+## [0.1.0] - 2026-10-10
+
+First public release.
+
+### Added
+
+- `npx vibereel` turns the latest Claude Code or Codex session for the current folder into one self-contained HTML player.
+- Storyboard that picks the moments worth showing (first prompt, plan, biggest edits, red to green test runs, final reply) and fits them into `--duration` seconds.
+- Player with a file tree, diffs, a terminal with a test status badge, live counters for time, tokens and estimated cost, and an end card.
+- Themes `dark`, `light` and `retro`; aspect ratios `16:9` and `9:16`. Keyboard controls in the player.
+- `--gif` and `--mp4` export through a local Chrome and ffmpeg.
+- Redaction on by default: home paths, API keys, tokens, URL passwords, `SECRET=` style assignments, emails and `.env` values. `--no-redact` to turn it off.
+- `--list`, `--session`, `--file`, `--json` and `--open`.
+
+[Unreleased]: https://github.com/TanbirRamim/vibereel/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/TanbirRamim/vibereel/releases/tag/v0.1.0
