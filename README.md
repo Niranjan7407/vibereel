@@ -12,8 +12,10 @@ Turn your last Claude Code or Codex session into a 30-second film you can actual
 That's a 47-minute session squeezed into 30 seconds: the prompt, the plan, the edits, a failing test run, the fix, and the green run. ([MP4](assets/demo.mp4) · [interactive HTML](assets/demo.html))
 
 ```sh
-npx vibereel
+npx github:TanbirRamim/vibereel
 ```
+
+(The npm package is on its way. Until then this installs straight from GitHub; once it's live it's just `npx vibereel`.)
 
 Run it inside a project you've used Claude Code or Codex in. You get one self-contained `vibereel-<id>.html` file. Open it in any browser, or drop it anywhere you'd host a static page. No CDN, no tracking, nothing to install for the viewer.
 
