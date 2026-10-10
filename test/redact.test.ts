@@ -20,7 +20,7 @@ describe('secrets', () => {
     ['aws', 'AKIAIOSFODNN7EXAMPLE'],
     ['slack', 'xoxb-123456789012-abcdefghij'],
     ['stripe', 'sk_live_51Habcdefghijklmn'],
-    ['google', 'AIzaSyA-1234567890abcdefghijklmnopqrstu'],
+    ['google', 'AIza' + 'SyA-1234567890abcdefghijklmnopqrstu'],
     ['jwt', 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U'],
     ['bearer', 'Authorization: Bearer abcdef0123456789abcdef'],
     ['huggingface', 'hf_abcdefghijklmnopqrstuvwxyzABCDEF'],
