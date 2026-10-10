@@ -1,0 +1,42 @@
+{
+  "name": "vibereel",
+  "version": "0.1.0",
+  "description": "Turn your latest Claude Code or Codex session into a 30-second shareable film.",
+  "type": "module",
+  "bin": {
+    "vibereel": "dist/cli.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && mkdir -p dist/player && cp src/player/client.js src/player/player.css dist/player/ && chmod +x dist/cli.js",
+    "test": "vitest run",
+    "demo": "npm run build && node dist/cli.js --file fixtures/demo-dark-mode.jsonl --out assets/demo.html --gif --mp4"
+  },
+  "keywords": [
+    "claude-code",
+    "codex",
+    "ai-agents",
+    "replay",
+    "video",
+    "gif",
+    "cli"
+  ],
+  "license": "MIT",
+  "author": "Tanbir Hossain Ramim",
+  "optionalDependencies": {
+    "puppeteer-core": "^25.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2",
+    "vitest": "^3.2.7"
+  }
+}
