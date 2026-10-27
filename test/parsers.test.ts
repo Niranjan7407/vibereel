@@ -62,6 +62,26 @@ describe('claude parser', () => {
   it('throws on files with no messages', () => {
     expect(() => parseClaude('{"type":"summary"}\n')).toThrow();
   });
+  it('uses structuredPatch oldStart for edit line numbers and falls back when absent', () => {
+    const record = (o: object) => JSON.stringify({ cwd: '/work/app', sessionId: 'line-number-test', ...o });
+    const editLog = (withPatch: boolean) => [
+      record({ type: 'user', timestamp: '2026-10-27T09:00:00.000Z', message: { role: 'user', content: 'Change a line' } }),
+      record({ type: 'assistant', timestamp: '2026-10-27T09:00:01.000Z', message: { id: 'm1', usage: { input_tokens: 1, output_tokens: 1 }, content: [
+        { type: 'tool_use', id: 'edit-1', name: 'Edit', input: { file_path: '/work/app/src/example.ts', old_string: 'const before = 1;', new_string: 'const after = 2;' } },
+      ] } }),
+      record({ type: 'user', timestamp: '2026-10-27T09:00:02.000Z', toolUseResult: {
+        type: 'update', originalFile: 'const before = 1;', content: 'const after = 2;',
+        ...(withPatch ? { structuredPatch: [{ oldStart: 120, oldLines: 1, newStart: 120, newLines: 1, lines: ['-const before = 1;', '+const after = 2;'] }] } : {}),
+      }, message: { role: 'user', content: [{ type: 'tool_result', tool_use_id: 'edit-1', content: 'Updated' }] } }),
+    ].join('\n');
+
+    const withOffset = parseClaude(editLog(true)).events.find((e) => e.kind === 'edit');
+    expect(withOffset).toMatchObject({ kind: 'edit', startLine: 120 });
+
+    const legacy = parseClaude(editLog(false)).events.find((e) => e.kind === 'edit');
+    expect(legacy).toMatchObject({ kind: 'edit' });
+    expect(legacy?.kind === 'edit' && legacy.startLine).toBeUndefined();
+  });
 });
 
 describe('claude subagents', () => {

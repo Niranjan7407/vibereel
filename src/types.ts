@@ -29,6 +29,8 @@ export type Event =
       diff: DiffLine[];
       added: number;
       removed: number;
+      /** First old-file line for the edit, when the source log provides it. */
+      startLine?: number;
     })
   | (Base & {
       kind: 'command';

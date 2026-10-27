@@ -13,6 +13,15 @@ function textOf(content: Json): string {
   return '';
 }
 
+/** Return the first real old-file line represented by Claude's structured diff. */
+function structuredPatchStartLine(result: Json): number | undefined {
+  const hunks: Json[] = result && Array.isArray(result.structuredPatch) ? result.structuredPatch : [];
+  for (const hunk of hunks) {
+    if (Number.isInteger(hunk?.oldStart) && hunk.oldStart > 0) return hunk.oldStart;
+  }
+  return undefined;
+}
+
 /** Turn a slash-command wrapper into "/name args"; returns null for other wrappers. */
 function slashCommand(text: string): string | null {
   const name = text.match(/<command-name>([^<]*)<\/command-name>/)?.[1];
@@ -78,9 +87,15 @@ export function parseClaude(jsonl: string, idHint = 'session'): Timeline {
         } else if (ev.kind === 'edit' && b.is_error) {
           // failed edit: drop it
           const i = events.indexOf(ev); if (i >= 0) events.splice(i, 1);
-        } else if (ev.kind === 'edit' && ev.created && typeof res === 'object' && res?.type === 'update' && typeof res.originalFile === 'string') {
-          const fixed = makeEdit(ev.at, ev.path, res.originalFile, res.content ?? '');
-          Object.assign(ev, fixed);
+        } else if (ev.kind === 'edit') {
+          // Older Claude logs and other providers may not include structuredPatch.
+          const startLine = structuredPatchStartLine(res);
+          if (startLine !== undefined) ev.startLine = startLine;
+          if (ev.created && typeof res === 'object' && res?.type === 'update' && typeof res.originalFile === 'string') {
+            const fixed = makeEdit(ev.at, ev.path, res.originalFile, res.content ?? '');
+            Object.assign(ev, fixed);
+            if (startLine !== undefined) ev.startLine = startLine;
+          }
         }
       }
       if (blocks.some((b: Json) => b?.type === 'tool_result') || d.toolUseResult) continue;

@@ -60,14 +60,15 @@
   scenes.forEach(function (s) { if (s.ev.kind === 'command' && s.ev.isTest) tests.push(s); });
 
   // diff display: collapse long unchanged runs
-  function prepDiff(diff) {
+  function prepDiff(diff, startLine) {
     var rows = [], i, n = diff.length, ctx = 3;
     var changed = diff.map(function (d) { return d.op !== ' '; });
     var near = diff.map(function (_, i) {
       for (var k = Math.max(0, i - ctx); k <= Math.min(n - 1, i + ctx); k++) if (changed[k]) return true;
       return false;
     });
-    var ln = 1, skipped = 0;
+    // Claude supplies the real old-file line; Codex/Gemini and older logs fall back to 1.
+    var ln = Number.isInteger(startLine) && startLine > 0 ? startLine : 1, skipped = 0;
     for (i = 0; i < n; i++) {
       var d = diff[i];
       if (d.op !== '-') ln++;
@@ -86,7 +87,7 @@
     rows.forEach(function (r) { if (r.at == null) r.at = 0.06; });
     return rows;
   }
-  scenes.forEach(function (s) { if (s.ev.kind === 'edit') s.rows = prepDiff(s.ev.diff); });
+  scenes.forEach(function (s) { if (s.ev.kind === 'edit') s.rows = prepDiff(s.ev.diff, s.ev.startLine); });
 
   // file tree
   var touchesByPath = {};
